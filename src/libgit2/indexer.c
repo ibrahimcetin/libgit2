@@ -30,7 +30,7 @@ size_t git_indexer__max_objects = UINT32_MAX;
 
 GIT_HASHMAP_OID_SETUP(git_indexer_oidmap, git_oid *);
 
-struct entry {
+struct indexer_entry {
 	git_oid oid;
 	uint32_t crc;
 	uint32_t offset;
@@ -119,8 +119,8 @@ static int parse_header(struct git_pack_header *hdr, struct git_pack_file *pack)
 
 static int objects_cmp(const void *a, const void *b)
 {
-	const struct entry *entrya = a;
-	const struct entry *entryb = b;
+	const struct indexer_entry *entrya = a;
+	const struct indexer_entry *entryb = b;
 
 	return git_oid__cmp(&entrya->oid, &entryb->oid);
 }
@@ -479,7 +479,7 @@ static int store_object(git_indexer *idx)
 {
 	int i, error;
 	git_oid oid;
-	struct entry *entry;
+	struct indexer_entry *entry;
 	off64_t entry_size;
 	struct git_pack_entry *pentry;
 	off64_t entry_start = idx->entry_start;
@@ -565,7 +565,7 @@ GIT_INLINE(bool) has_entry(git_indexer *idx, git_oid *id)
 	return git_pack_oidmap_contains(&idx->pack->idx_cache, id);
 }
 
-static int save_entry(git_indexer *idx, struct entry *entry, struct git_pack_entry *pentry, off64_t entry_start)
+static int save_entry(git_indexer *idx, struct indexer_entry *entry, struct git_pack_entry *pentry, off64_t entry_start)
 {
 	int i;
 
@@ -599,7 +599,7 @@ static int hash_and_save(git_indexer *idx, git_rawobj *obj, off64_t entry_start)
 {
 	git_oid oid;
 	size_t entry_size;
-	struct entry *entry;
+	struct indexer_entry *entry;
 	struct git_pack_entry *pentry = NULL;
 
 	entry = git__calloc(1, sizeof(*entry));
@@ -988,7 +988,7 @@ static int seek_back_trailer(git_indexer *idx)
 static int inject_object(git_indexer *idx, git_oid *id)
 {
 	git_odb_object *obj = NULL;
-	struct entry *entry = NULL;
+	struct indexer_entry *entry = NULL;
 	struct git_pack_entry *pentry = NULL;
 	unsigned char empty_checksum[GIT_HASH_MAX_SIZE] = {0};
 	unsigned char hdr[64];
@@ -1233,7 +1233,7 @@ int git_indexer_commit(git_indexer *idx, git_indexer_progress *stats)
 	int error;
 	struct git_pack_idx_header hdr;
 	git_str filename = GIT_STR_INIT;
-	struct entry *entry;
+	struct indexer_entry *entry;
 	unsigned char checksum[GIT_HASH_MAX_SIZE];
 	git_filebuf index_file = {0};
 	void *packfile_trailer;
