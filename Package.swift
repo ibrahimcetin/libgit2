@@ -96,8 +96,8 @@ let package = Package(
 
                 // Git HTTPS transport configuration
                 .define("GIT_HTTPS", to: "1"),
-                .define("GIT_SECURE_TRANSPORT", to: "1"),
-		        .define("GIT_HTTPPARSER_BUILTIN", to: "1"),
+                .define("GIT_HTTPS_SECURETRANSPORT", to: "1"),
+                .define("GIT_HTTPPARSER_BUILTIN", to: "1"),
                 // .define("GIT_OPENSSL", to: "0"),
                 // .define("GIT_OPENSSL_DYNAMIC", to: "0"),
                 // .define("GIT_MBEDTLS", to: "0"),
