@@ -5,6 +5,8 @@
  * a Linking Exception. For full terms see the included COPYING file.
  */
 
+#ifndef GIT_NO_PROCESS_SPAWN
+
 #include <stdio.h>
 #include <sys/wait.h>
 #include <signal.h>
@@ -627,3 +629,5 @@ void git_process_free(git_process *process)
 	git_strlist_free_with_null(process->env);
 	git__free(process);
 }
+
+#endif
