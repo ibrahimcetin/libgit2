@@ -97,8 +97,8 @@ var cSettings: [CSetting] = [
 	.define("MAX_NAME_COUNT", to: "10000"),
 
 	// SSH transport (exec-based, uses system ssh command)
-	.define("GIT_SSH", to: "1"),
-	.define("GIT_SSH_EXEC", to: "1"),
+	.define("GIT_SSH", to: "1", .when(platforms: [.macOS, .iOS, .linux, .android])),
+	.define("GIT_SSH_EXEC", to: "1", .when(platforms: [.macOS, .iOS, .linux, .android])),
 
 	// HTTP configuration
 	.define("GIT_HTTPS", to: "1"),
