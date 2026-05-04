@@ -18,6 +18,8 @@
 # include "crypt_mbedtls.h"
 #elif defined(CRYPT_COMMONCRYPTO)
 # include "crypt_commoncrypto.h"
+#elif defined(CRYPT_DISABLED)
+# include "crypt_disabled.h"
 #else
 # error "no crypto support"
 #endif

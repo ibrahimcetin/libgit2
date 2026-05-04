@@ -318,12 +318,16 @@ var linkerSettings: [LinkerSetting] = []
 		.headerSearchPath("src/util/hash/sha1dc"),
 		.headerSearchPath("src/util/hash/rfc6234"),
 
-		// NTLM crypto via OpenSSL (dynamic) on Linux; Android falls back to
-		// the builtin path which doesn't need libcrypto.
+		// NTLM crypto via OpenSSL (dynamic) on Linux. Bionic / Android
+		// has no usable backend (no libcrypto headers in the swift-android
+		// SDK), so we wire ntlmclient up to its `CRYPT_DISABLED` stub
+		// which provides the type signatures expected by ntlm.h but
+		// returns failure for every operation. NTLM auth is unsupported
+		// on Android in practice; bearer-token HTTPS still works.
 		.define("CRYPT_OPENSSL", .when(platforms: [.linux])),
 		.define("CRYPT_OPENSSL_DYNAMIC", .when(platforms: [.linux])),
 		.define("OPENSSL_API_COMPAT", to: "0x10100000L", .when(platforms: [.linux])),
-		.define("CRYPT_BUILTIN", .when(platforms: [.android])),
+		.define("CRYPT_DISABLED", .when(platforms: [.android])),
 
 		// Nanosecond support via mtim (Linux/Bionic both expose st_mtim).
 		.define("GIT_NSEC_MTIM", to: "1"),
