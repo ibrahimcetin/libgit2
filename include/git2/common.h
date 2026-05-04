@@ -28,6 +28,18 @@
 # include <inttypes.h>
 #endif
 
+#ifdef _WIN32
+/* Windows MSVC + clang-cl don't expose `ssize_t` in `<sys/types.h>`;
+ * `<basetsd.h>` provides `SSIZE_T` (capitalised), which the public
+ * `git2/sys/stream.h` callback signatures need. Alias it under the
+ * lowercase POSIX spelling once for all consumers of the headers. */
+# include <basetsd.h>
+# ifndef _SSIZE_T_DEFINED
+typedef SSIZE_T ssize_t;
+#  define _SSIZE_T_DEFINED
+# endif
+#endif
+
 #ifdef DOCURIUM
 /*
  * This is so clang's doc parser acknowledges comments on functions
