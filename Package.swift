@@ -100,11 +100,11 @@ var cSettings: [CSetting] = [
 	// HTTP request parser (always builtin — llhttp).
 	.define("GIT_HTTPPARSER_BUILTIN", to: "1"),
 
-	// HTTPS gate. Enabled everywhere except Android (no available backend
-	// in the swift-android toolchain right now). Backend choice
-	// (`GIT_HTTPS_*`) lives in the per-host arms below.
+	// HTTPS gate. Backend choice (`GIT_HTTPS_*`) lives in the per-host
+	// arms below — SecureTransport (Apple), OpenSSL-dynamic (Linux +
+	// Android via BoringSSL ABI compat), WinHTTP (Windows).
 	.define("GIT_HTTPS", to: "1",
-	        .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .linux, .windows])),
+	        .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .linux, .android, .windows])),
 
 	// I/O configuration. Linux/Apple use poll(2), Windows uses WSAPoll
 	// (winsock2 provides its own `pollfd` struct, so we let posix.h
@@ -300,10 +300,14 @@ var linkerSettings: [LinkerSetting] = []
 		// falls back to its bundled insertion sort (`util.c:insertsort`).
 		.define("GIT_QSORT_GNU", .when(platforms: [.linux])),
 
-		// HTTPS via OpenSSL (dynamic loading) — Linux only. Android currently
-		// has no HTTPS backend wired in; clones over HTTP work, HTTPS fails
-		// at runtime. Track Android HTTPS as a follow-up.
-		.define("GIT_HTTPS_OPENSSL_DYNAMIC", to: "1", .when(platforms: [.linux])),
+		// HTTPS via OpenSSL — *dynamic* dispatch on both Linux and Android.
+		// `_DYNAMIC` means libgit2 uses its own forward declarations and
+		// `dlopen`s `libssl.so` at runtime, so we don't need OpenSSL
+		// dev headers in the NDK sysroot. Android system ships
+		// `libssl.so` / `libcrypto.so` (BoringSSL with OpenSSL ABI
+		// compatibility for the symbols both libgit2 and ntlmclient touch).
+		.define("GIT_HTTPS_OPENSSL_DYNAMIC", to: "1",
+		        .when(platforms: [.linux, .android])),
 
 		// Hash implementations via builtin (collision-detecting SHA1, RFC6234 SHA256).
 		.define("GIT_SHA1_BUILTIN", to: "1"),
@@ -318,16 +322,15 @@ var linkerSettings: [LinkerSetting] = []
 		.headerSearchPath("src/util/hash/sha1dc"),
 		.headerSearchPath("src/util/hash/rfc6234"),
 
-		// NTLM crypto via OpenSSL (dynamic) on Linux. Bionic / Android
-		// has no usable backend (no libcrypto headers in the swift-android
-		// SDK), so we wire ntlmclient up to its `CRYPT_DISABLED` stub
-		// which provides the type signatures expected by ntlm.h but
-		// returns failure for every operation. NTLM auth is unsupported
-		// on Android in practice; bearer-token HTTPS still works.
-		.define("CRYPT_OPENSSL", .when(platforms: [.linux])),
-		.define("CRYPT_OPENSSL_DYNAMIC", .when(platforms: [.linux])),
-		.define("OPENSSL_API_COMPAT", to: "0x10100000L", .when(platforms: [.linux])),
-		.define("CRYPT_DISABLED", .when(platforms: [.android])),
+		// NTLM crypto via OpenSSL — same dynamic dispatch as the HTTPS
+		// stack, on both Linux and Android. ntlmclient's
+		// `crypt_openssl.h` skips the `<openssl/*.h>` includes when
+		// `CRYPT_OPENSSL_DYNAMIC` is set, declaring its own forward
+		// types instead. Symbols are resolved at runtime via `dlopen`.
+		.define("CRYPT_OPENSSL", .when(platforms: [.linux, .android])),
+		.define("CRYPT_OPENSSL_DYNAMIC", .when(platforms: [.linux, .android])),
+		.define("OPENSSL_API_COMPAT", to: "0x10100000L",
+		        .when(platforms: [.linux, .android])),
 
 		// Nanosecond support via mtim (Linux/Bionic both expose st_mtim).
 		.define("GIT_NSEC_MTIM", to: "1"),
