@@ -289,8 +289,10 @@ var linkerSettings: [LinkerSetting] = []
 		// honours _GNU_SOURCE for the same set of symbols.
 		.define("_GNU_SOURCE"),
 
-		// qsort variant (GNU-style on Linux; Bionic has the GNU extension too).
-		.define("GIT_QSORT_GNU", .when(platforms: [.linux, .android])),
+		// qsort variant (GNU-style on Linux). Bionic doesn't expose
+		// `qsort_r`, so leave GIT_QSORT_* unset on Android — libgit2
+		// falls back to its bundled insertion sort (`util.c:insertsort`).
+		.define("GIT_QSORT_GNU", .when(platforms: [.linux])),
 
 		// HTTPS via OpenSSL (dynamic loading) — Linux only. Android currently
 		// has no HTTPS backend wired in; clones over HTTP work, HTTPS fails
