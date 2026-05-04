@@ -106,12 +106,16 @@ var cSettings: [CSetting] = [
 	.define("GIT_HTTPS", to: "1",
 	        .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .linux, .windows])),
 
-	// I/O configuration
+	// I/O configuration. Linux/Apple use poll(2), Windows uses WSAPoll
+	// (winsock2 provides its own `pollfd` struct, so we let posix.h
+	// pick that up instead of defining its own).
 	.define("GIT_IO_POLL", to: "1",
 	        .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .linux, .android])),
-	.define("GIT_IO_SELECT", to: "1", .when(platforms: [.windows])),
+	.define("GIT_IO_WSAPOLL", to: "1", .when(platforms: [.windows])),
 
-	// Nanosecond timestamp support
+	// Nanosecond timestamp support. The OS-specific arm (mtim /
+	// mtimespec / win32 GetFileTime) lives in the per-host blocks
+	// below; here we only flip the master GIT_NSEC switch.
 	.define("GIT_NSEC", to: "1"),
 	.define("GIT_FUTIMENS", to: "1",
 	        .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .linux, .android])),
@@ -246,8 +250,10 @@ var linkerSettings: [LinkerSetting] = []
 		// NTLM crypto via NTLMClient builtin (uses Win32 BCrypt under the hood).
 		.define("CRYPT_BUILTIN"),
 
-		// Windows uses GetSystemTimeAsFileTime (no nanosecond mtim/mtimespec).
-		// Leave GIT_NSEC defined but skip the Linux/Apple-specific arms.
+		// Win32 uses GetFileTime / FILETIME for nanosecond mtimes. The
+		// posix.h header errors out if GIT_NSEC is set without one of
+		// the per-OS arms; Win32 maps to GIT_NSEC_WIN32.
+		.define("GIT_NSEC_WIN32", to: "1"),
 
 		// libgit2 expects these to be defined for any Windows build.
 		.define("WIN32"),
