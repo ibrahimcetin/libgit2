@@ -120,11 +120,18 @@ var cSettings: [CSetting] = [
 	.define("GIT_FUTIMENS", to: "1",
 	        .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .linux, .android])),
 
-	// NTLM authentication (builtin)
+	// NTLM authentication. On Apple/Linux/Android we use the bundled
+	// ntlmclient (`auth_ntlmclient.c` → `deps/ntlmclient/*`). On Windows
+	// we route through SSPI instead (`auth_sspi.c`, system Win32 API)
+	// since ntlmclient is POSIX-oriented and pulls in `<arpa/inet.h>`.
 	.define("GIT_AUTH_NTLM", to: "1"),
-	.define("GIT_AUTH_NTLM_BUILTIN", to: "1"),
-	.define("NTLM_STATIC", to: "1"),
-	.define("UNICODE_BUILTIN", to: "1"),
+	.define("GIT_AUTH_NTLM_BUILTIN", to: "1",
+	        .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .linux, .android])),
+	.define("GIT_AUTH_NTLM_SSPI", to: "1", .when(platforms: [.windows])),
+	.define("NTLM_STATIC", to: "1",
+	        .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .linux, .android])),
+	.define("UNICODE_BUILTIN", to: "1",
+	        .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .linux, .android])),
 
 	// Compression (builtin zlib)
 	.define("GIT_COMPRESSION_BUILTIN", to: "1"),
@@ -209,6 +216,10 @@ var linkerSettings: [LinkerSetting] = []
 	excludedPaths += [
 		// Unix POSIX layer is incompatible with Win32.
 		"src/util/unix",
+
+		// ntlmclient is POSIX-oriented (uses <arpa/inet.h> etc).
+		// Windows uses SSPI for NTLM via `auth_sspi.c` instead.
+		"deps/ntlmclient",
 
 		// CommonCrypto hash backends - Apple-only
 		"src/util/hash/common_crypto.c",
