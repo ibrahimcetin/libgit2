@@ -29,7 +29,7 @@ var excludedPaths: [String] = [
 	"deps/pcre/CMakeLists.txt",
 	"deps/pcre/COPYING",
 	"deps/pcre/LICENCE",
-	"deps/pcre/cmake/",
+	"deps/pcre/cmake",
 	"deps/pcre/config.h.in",
 	"deps/xdiff/CMakeLists.txt",
 	"deps/zlib/CMakeLists.txt",
