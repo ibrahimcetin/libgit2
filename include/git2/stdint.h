@@ -29,6 +29,16 @@
  *
  *******************************************************************************/
 
+/* Visual Studio 2010 (_MSC_VER == 1600) and later, plus clang-cl when
+ * targeting MSVC, ship a compliant `<stdint.h>` in the SDK. Defer to it
+ * to avoid re-declaring `int_fast16_t` etc. with a different underlying
+ * type than the system header. The polyfill below is only relevant for
+ * VS2008 and earlier. */
+#if defined(_MSC_VER) && _MSC_VER >= 1600
+# include <stdint.h>
+#elif defined(__clang__)
+# include <stdint.h>
+#else
 #ifdef _MSC_VER /* [ */
 
 #ifndef _MSC_STDINT_H_ /* [ */
@@ -247,3 +257,4 @@ typedef uint64_t  uintmax_t;
 #endif /* _MSC_STDINT_H_ ] */
 
 #endif /* _MSC_VER ] */
+#endif /* modern MSVC / clang shortcut ] */
